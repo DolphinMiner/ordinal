@@ -6,6 +6,11 @@ type InputEvent struct {
 	Prompt string `json:"prompt"`
 }
 
+type OutputEvent struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
+
 type TxInfo struct {
 	BlockHash     string    `json:"block_hash"`
 	BlockHeight   int       `json:"block_height"`
