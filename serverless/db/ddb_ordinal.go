@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"log"
-	"ordinal/src/entity"
+	"ordinal/serverless/entity"
 	"sort"
 	"strconv"
 	"strings"
@@ -70,6 +70,10 @@ func QueryOrdinal(tokenID int) ([]entity.Ordinal, error) {
 
 	return ordinals, nil
 }
+
+//func QueryFullOrdinal() ([]entity.Ordinal, error) {
+//
+//}
 
 func UpdateInscriptionID(newInscriptionID int, genesisTxID string) error {
 

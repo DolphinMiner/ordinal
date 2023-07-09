@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	ddb "ordinal/src/db"
+	ddb "ordinal/serverless/db"
 	"regexp"
 	"strconv"
 

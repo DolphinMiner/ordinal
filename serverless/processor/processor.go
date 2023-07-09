@@ -2,8 +2,8 @@ package processor
 
 import (
 	"encoding/json"
-	"ordinal/src/entity"
-	"ordinal/src/httputil"
+	"ordinal/serverless/entity"
+	"ordinal/serverless/httputil"
 	"strings"
 	"time"
 )

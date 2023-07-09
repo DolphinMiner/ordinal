@@ -1,8 +1,8 @@
 package main
 
 import (
-	"ordinal/src/entity"
-	"ordinal/src/processor"
+	"ordinal/serverless/entity"
+	"ordinal/serverless/processor"
 )
 
 func main() {
