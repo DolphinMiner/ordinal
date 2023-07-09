@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	ddb "ordinal/src/db"
 	"regexp"
 	"strconv"
 
@@ -60,11 +61,13 @@ func Process() []string {
 // TODO from ddb 保存当前爬到的最新的index和txId
 func saveCurIndexAndTxId(curIndex int, curTxId string) {
 	fmt.Printf("save latest index is %d and latest txId is %s \n", curIndex, curTxId)
+	ddb.UpdateInscriptionID(curIndex, curTxId)
 }
 
 // TODO from ddb 上一次获取的inscription的编号和txid
 func getLatestIndex() (int, string) {
-	return 5452679, "31889fe69d3d74ed16da6b62bae62f227d8764b13158c1d3be2dc502f9d94994"
+	inscription := ddb.GetLatestIndex()
+	return inscription.InscriptionID, inscription.GenesisTxID
 }
 
 func doCrawler(crawlerIndex *int, isFirstTime *bool) []string {

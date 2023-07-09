@@ -9,13 +9,17 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"log"
 	"ordinal/src/entity"
+	"sort"
 	"strconv"
+	"strings"
 )
 
 const OrdinalTableName = "ordinal"
 
-func GetCurInscription(ctx context.Context) (int, error) {
-	result, err := ordinalClient(ctx).GetItem(ctx, &dynamodb.GetItemInput{
+var ctx = context.Background()
+
+func GetLatestIndex() *entity.Ordinal {
+	result, err := ordinalClient().GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(OrdinalTableName),
 		Key: map[string]types.AttributeValue{
 			"ordinalID":  &types.AttributeValueMemberN{Value: strconv.Itoa(-1)},
@@ -23,20 +27,20 @@ func GetCurInscription(ctx context.Context) (int, error) {
 		},
 	})
 	if err != nil {
-		return 0, err
+		log.Fatalln("fail to get cur inscription index!")
 	}
 
 	ordinal := entity.Ordinal{}
 	err = attributevalue.UnmarshalMap(result.Item, &ordinal)
 	if err != nil {
-		return 0, err
+		log.Fatalln("fail to unmarshalMap")
 	}
-	return ordinal.InscriptionID, nil
+	return &ordinal
 }
 
-func QueryOrdinal(ctx context.Context, tokenID int) ([]entity.Ordinal, error) {
+func QueryOrdinal(tokenID int) ([]entity.Ordinal, error) {
 
-	result, err := ordinalClient(ctx).Query(ctx, &dynamodb.QueryInput{
+	result, err := ordinalClient().Query(ctx, &dynamodb.QueryInput{
 		TableName:              aws.String(OrdinalTableName),
 		KeyConditionExpression: aws.String("tokenID = :tokenID"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
@@ -59,10 +63,15 @@ func QueryOrdinal(ctx context.Context, tokenID int) ([]entity.Ordinal, error) {
 		ordinals = append(ordinals, ordinal)
 	}
 
+	// 根据 createTime 进行排序
+	sort.Slice(ordinals, func(i, j int) bool {
+		return strings.Compare(ordinals[i].CreateTime, ordinals[j].CreateTime) < 0
+	})
+
 	return ordinals, nil
 }
 
-func UpdateInscriptionID(ctx context.Context, newInscriptionID int) error {
+func UpdateInscriptionID(newInscriptionID int, genesisTxID string) error {
 
 	update := &dynamodb.UpdateItemInput{
 		TableName: aws.String(OrdinalTableName),
@@ -70,34 +79,36 @@ func UpdateInscriptionID(ctx context.Context, newInscriptionID int) error {
 			"tokenID":    &types.AttributeValueMemberN{Value: strconv.Itoa(-1)},
 			"createTime": &types.AttributeValueMemberN{Value: strconv.Itoa(0)},
 		},
-		UpdateExpression: aws.String("SET #inscriptionID = :inscriptionID"),
+		UpdateExpression: aws.String("SET #inscriptionID = :inscriptionID and #genesisTxID = :genesisTxID "),
 		ExpressionAttributeNames: map[string]string{
 			"#inscriptionID": "inscriptionID",
+			"#genesisTxID":   "genesisTxID",
 		},
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":newInscriptionID": &types.AttributeValueMemberN{Value: strconv.Itoa(newInscriptionID)},
+			":genesisTxID":      &types.AttributeValueMemberS{Value: genesisTxID},
 		},
 	}
 
-	_, err := ordinalClient(ctx).UpdateItem(ctx, update)
+	_, err := ordinalClient().UpdateItem(ctx, update)
 	return err
 }
 
-func PutOrdinal(ctx context.Context, ordinal *entity.Ordinal) error {
+func PutOrdinal(ordinal *entity.Ordinal) error {
 
 	item, err := attributevalue.MarshalMap(ordinal)
 	if err != nil {
 		return err
 	}
 
-	_, err = ordinalClient(ctx).PutItem(ctx, &dynamodb.PutItemInput{
+	_, err = ordinalClient().PutItem(ctx, &dynamodb.PutItemInput{
 		TableName: aws.String(OrdinalTableName),
 		Item:      item,
 	})
 	return err
 }
 
-func ordinalClient(ctx context.Context) *dynamodb.Client {
+func ordinalClient() *dynamodb.Client {
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		log.Fatalf("unable to load SDK config, %v", err)
