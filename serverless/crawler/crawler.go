@@ -7,6 +7,7 @@ import (
 	ddb "ordinal/serverless/db"
 	"regexp"
 	"strconv"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -15,6 +16,7 @@ const (
 	url                = "https://ordinalslite.com/inscriptions"
 	reTxId             = "/inscription/(.*?)i0"
 	reInscriptionIndex = "/inscriptions/(.*?)"
+	previewUri         = "https://ordinalslite.com/preview/"
 )
 
 // 执行爬虫任务
@@ -124,8 +126,22 @@ func doCrawler(crawlerIndex *int, isFirstTime *bool) []string {
 		inscriptionLink, _ := ele.Attr("href")
 		originTxId := reTx.FindStringSubmatch(inscriptionLink)
 		if len(originTxId) > 0 {
-			originTxIds = append(originTxIds, originTxId[1])
+			previewUrl := previewUri + originTxId[1] + "i0"
+			// 获取preview
+			doc_pre, err := goquery.NewDocument(previewUrl)
+			if err != nil {
+				log.Printf("[ERROR] fail to call preview for txId %s!", originTxId[1])
+			} else {
+				doc_pre.Find("img").Eq(0).Each(func(i int, im *goquery.Selection) {
+					// 如果是img节点，说明这个交易是图片的铭刻
+					originTxIds = append(originTxIds, originTxId[1])
+				})
+			}
+		} else {
+			log.Printf("[ERROR] fail to get txId from <a href> tag!")
 		}
+		// 延时1s
+		time.Sleep(1 * time.Second)
 	})
 	return originTxIds
 }
