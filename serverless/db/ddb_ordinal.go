@@ -2,17 +2,15 @@ package ddb
 
 import (
 	"context"
-	"log"
-	"ordinal/serverless/entity"
-	"sort"
-	"strconv"
-	"strings"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"log"
+	"ordinal/serverless/entity"
+	"strconv"
+	"time"
 )
 
 const OrdinalTableName = "ordinal"
@@ -23,8 +21,8 @@ func GetLatestIndex() *entity.Ordinal {
 	result, err := ordinalClient().GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(OrdinalTableName),
 		Key: map[string]types.AttributeValue{
-			"ordinalID":  &types.AttributeValueMemberN{Value: strconv.Itoa(-1)},
-			"createTime": &types.AttributeValueMemberS{Value: "0"},
+			"ordinalID": &types.AttributeValueMemberN{Value: strconv.Itoa(-1)},
+			"index":     &types.AttributeValueMemberN{Value: "0"},
 		},
 	})
 	if err != nil {
@@ -39,50 +37,13 @@ func GetLatestIndex() *entity.Ordinal {
 	return &ordinal
 }
 
-func QueryOrdinal(tokenID int) ([]entity.Ordinal, error) {
-
-	result, err := ordinalClient().Query(ctx, &dynamodb.QueryInput{
-		TableName:              aws.String(OrdinalTableName),
-		KeyConditionExpression: aws.String("tokenID = :tokenID"),
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			"tokenID": &types.AttributeValueMemberN{Value: strconv.Itoa(tokenID)},
-		},
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	var ordinals []entity.Ordinal
-
-	for _, item := range result.Items {
-		var ordinal entity.Ordinal
-		err := attributevalue.UnmarshalMap(item, &ordinal)
-		if err != nil {
-			log.Fatalln("fail to UnmarshalMap ordinal record")
-		}
-		ordinals = append(ordinals, ordinal)
-	}
-
-	// 根据 createTime 进行排序
-	sort.Slice(ordinals, func(i, j int) bool {
-		return strings.Compare(ordinals[i].CreateTime, ordinals[j].CreateTime) < 0
-	})
-
-	return ordinals, nil
-}
-
-//func QueryFullOrdinal() ([]entity.Ordinal, error) {
-//
-//}
-
 func UpdateInscriptionID(newInscriptionID int, genesisTxID string) error {
 
 	update := &dynamodb.UpdateItemInput{
 		TableName: aws.String(OrdinalTableName),
 		Key: map[string]types.AttributeValue{
-			"tokenID":    &types.AttributeValueMemberN{Value: strconv.Itoa(-1)},
-			"createTime": &types.AttributeValueMemberN{Value: strconv.Itoa(0)},
+			"tokenID": &types.AttributeValueMemberN{Value: strconv.Itoa(-1)},
+			"index":   &types.AttributeValueMemberN{Value: strconv.Itoa(0)},
 		},
 		UpdateExpression: aws.String("SET #inscriptionID = :inscriptionID and #genesisTxID = :genesisTxID "),
 		ExpressionAttributeNames: map[string]string{
@@ -99,8 +60,20 @@ func UpdateInscriptionID(newInscriptionID int, genesisTxID string) error {
 	return err
 }
 
-func PutOrdinal(ordinal *entity.Ordinal) error {
-
+func PutOrdinal(ordinalRequest *entity.Ordinal) error {
+	// 查询ordinal数量作为index
+	ordinalsNum, err := queryOrdinalSize(ordinalRequest.TokenID)
+	if err != nil {
+		log.Fatalln("fail to UnmarshalMap ordinal record")
+		return err
+	}
+	ordinal := &entity.Ordinal{
+		TokenID:       ordinalRequest.TokenID,
+		Index:         ordinalsNum,
+		GenesisTxID:   ordinalRequest.GenesisTxID,
+		InscriptionID: ordinalRequest.InscriptionID,
+		CreateTime:    time.Now().Format("2006-01-02 15:04:05"),
+	}
 	item, err := attributevalue.MarshalMap(ordinal)
 	if err != nil {
 		return err
@@ -111,6 +84,22 @@ func PutOrdinal(ordinal *entity.Ordinal) error {
 		Item:      item,
 	})
 	return err
+}
+
+func queryOrdinalSize(tokenID int) (int, error) {
+
+	result, err := ordinalClient().Query(ctx, &dynamodb.QueryInput{
+		TableName:              aws.String(OrdinalTableName),
+		KeyConditionExpression: aws.String("tokenID = :tokenID"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			"tokenID": &types.AttributeValueMemberN{Value: strconv.Itoa(tokenID)},
+		},
+	})
+
+	if err != nil {
+		return 0, err
+	}
+	return len(result.Items), nil
 }
 
 func ordinalClient() *dynamodb.Client {
