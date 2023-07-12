@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RequestMapping("v1/crypto/punks")
 @RestController
@@ -21,14 +23,40 @@ public class OrdinalApi {
     @GetMapping("/queryByID")
     public CommonResult<List<Ordinal>> queryByID(@RequestParam Integer tokenID) {
         List<Ordinal> ordinals = ordinalMapper.queryByTokenID(tokenID);
+        if(ordinals == null) {
+            CommonResult.failed("Query failed!");
+        }
         return CommonResult.success(ordinals);
     }
 
-
-    @GetMapping("/queryRecentMint")
-    public CommonResult<List<Ordinal>> queryRecentMint() {
-        List<Ordinal> ordinals = ordinalMapper.queryRecentMint();
+    @GetMapping("/queryAll/random")
+    public CommonResult<List<Ordinal>> querySortedByRandom() {
+        List<Ordinal> ordinals = ordinalMapper.queryAllOrdinals();
+        if(ordinals == null) {
+            CommonResult.failed("Query failed!");
+        }
         return CommonResult.success(ordinals);
     }
 
+    @GetMapping("/queryAll/recentInscribe")
+    public CommonResult<List<Ordinal>> querySortedByrRecentInscribe() {
+        List<Ordinal> ordinals = ordinalMapper.queryAllOrdinals().stream()
+                .sorted(Comparator.comparing(Ordinal::getCreateTime).reversed())
+                .collect(Collectors.toList());
+        if(ordinals == null) {
+            CommonResult.failed("Query failed!");
+        }
+        return CommonResult.success(ordinals);
+    }
+
+    @GetMapping("/queryAll/punkID")
+    public CommonResult<List<Ordinal>> querySortedByPunkID() {
+        List<Ordinal> ordinals = ordinalMapper.queryAllOrdinals().stream()
+                .sorted(Comparator.comparing(Ordinal::getTokenID))
+                .collect(Collectors.toList());
+        if(ordinals == null) {
+            CommonResult.failed("Query failed!");
+        }
+        return CommonResult.success(ordinals);
+    }
 }
