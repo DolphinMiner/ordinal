@@ -42,8 +42,8 @@ func UpdateInscriptionID(newInscriptionID int, genesisTxID string) error {
 	update := &dynamodb.UpdateItemInput{
 		TableName: aws.String(OrdinalTableName),
 		Key: map[string]types.AttributeValue{
-			"tokenID": &types.AttributeValueMemberN{Value: strconv.Itoa(-1)},
-			"index":   &types.AttributeValueMemberN{Value: strconv.Itoa(0)},
+			"tokenID":    &types.AttributeValueMemberN{Value: strconv.Itoa(-1)},
+			"sequenceNo": &types.AttributeValueMemberN{Value: strconv.Itoa(-1)},
 		},
 		UpdateExpression: aws.String("SET #inscriptionID = :inscriptionID and #genesisTxID = :genesisTxID "),
 		ExpressionAttributeNames: map[string]string{
@@ -62,14 +62,14 @@ func UpdateInscriptionID(newInscriptionID int, genesisTxID string) error {
 
 func PutOrdinal(ordinalRequest *entity.Ordinal) error {
 	// 查询ordinal数量作为index
-	ordinalsNum, err := queryOrdinalSize(ordinalRequest.TokenID)
+	ordinalsSize, err := queryOrdinalSize(ordinalRequest.TokenID)
 	if err != nil {
 		log.Fatalln("fail to UnmarshalMap ordinal record")
 		return err
 	}
 	ordinal := &entity.Ordinal{
 		TokenID:       ordinalRequest.TokenID,
-		Index:         ordinalsNum,
+		SequenceNo:    ordinalsSize,
 		GenesisTxID:   ordinalRequest.GenesisTxID,
 		InscriptionID: ordinalRequest.InscriptionID,
 		CreateTime:    time.Now().Format("2006-01-02 15:04:05"),
