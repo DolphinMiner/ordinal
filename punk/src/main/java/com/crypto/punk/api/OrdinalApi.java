@@ -24,4 +24,11 @@ public class OrdinalApi {
         return CommonResult.success(ordinals);
     }
 
+
+    @GetMapping("/queryRecentMint")
+    public CommonResult<List<Ordinal>> queryRecentMint() {
+        List<Ordinal> ordinals = ordinalMapper.queryRecentMint();
+        return CommonResult.success(ordinals);
+    }
+
 }
