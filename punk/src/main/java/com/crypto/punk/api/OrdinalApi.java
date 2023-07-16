@@ -13,7 +13,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@RequestMapping("v1/crypto/punks")
+@RequestMapping("api/crypto/punks")
 @RestController
 public class OrdinalApi {
 
@@ -29,7 +29,7 @@ public class OrdinalApi {
         return CommonResult.success(ordinals);
     }
 
-    @GetMapping("/queryAll/random")
+    @GetMapping("/querySortedByRandom")
     public CommonResult<List<Ordinal>> querySortedByRandom() {
         List<Ordinal> ordinals = ordinalMapper.queryAllOrdinals();
         if(ordinals == null) {
@@ -38,8 +38,8 @@ public class OrdinalApi {
         return CommonResult.success(ordinals);
     }
 
-    @GetMapping("/queryAll/recentInscribe")
-    public CommonResult<List<Ordinal>> querySortedByrRecentInscribe() {
+    @GetMapping("/querySortedByrRecentMint")
+    public CommonResult<List<Ordinal>> querySortedByrRecentMint() {
         List<Ordinal> ordinals = ordinalMapper.queryAllOrdinals().stream()
                 .sorted(Comparator.comparing(Ordinal::getCreateTime).reversed())
                 .collect(Collectors.toList());
@@ -49,7 +49,7 @@ public class OrdinalApi {
         return CommonResult.success(ordinals);
     }
 
-    @GetMapping("/queryAll/punkID")
+    @GetMapping("/querySortedByPunkID")
     public CommonResult<List<Ordinal>> querySortedByPunkID() {
         List<Ordinal> ordinals = ordinalMapper.queryAllOrdinals().stream()
                 .sorted(Comparator.comparing(Ordinal::getTokenID))

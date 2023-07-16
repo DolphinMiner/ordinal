@@ -7,7 +7,7 @@ import lombok.Value;
 @Value
 public class Ordinal {
     Integer tokenID;
-    Integer index;
+    Integer sequenceNo;
     String createTime;
     String genesisTxID;
     Integer inscriptionID;

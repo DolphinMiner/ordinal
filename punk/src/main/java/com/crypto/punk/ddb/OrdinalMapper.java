@@ -24,7 +24,7 @@ public class OrdinalMapper {
 
         QueryRequest queryRequest = QueryRequest.builder()
                 .tableName(Constants.ORDINAL_TABLE_NAME)
-                .keyConditionExpression("#tokenID = :tokenID")
+                .keyConditionExpression("tokenID = :tokenID")
                 .expressionAttributeValues(
                         Map.of(":tokenID", AttributeValue.builder().n(tokenID.toString()).build()))
                 .build();
@@ -33,7 +33,7 @@ public class OrdinalMapper {
 
             return queryResponse.items().stream()
                     .map(OrdinalMapper::convertToOrdinals)
-                    .sorted(Comparator.comparing(Ordinal::getIndex))
+                    .sorted(Comparator.comparing(Ordinal::getSequenceNo))
                     .collect(Collectors.toList());
         } catch (Exception e) {
             log.error("【QueryError】" + e);
@@ -44,9 +44,9 @@ public class OrdinalMapper {
     public List<Ordinal> queryAllOrdinals() {
         ScanRequest scanRequest = ScanRequest.builder()
                 .tableName(Constants.ORDINAL_TABLE_NAME)
-                .filterExpression("index = :index")
+                .filterExpression("sequenceNo = :sequenceNo")
                 .expressionAttributeValues(
-                        Map.of(":index", AttributeValue.builder().n("0").build()))
+                        Map.of(":sequenceNo", AttributeValue.builder().n("0").build()))
                 .build();
         try {
             ScanResponse scanResponse = dynamoDbClient.scan(scanRequest);
@@ -62,7 +62,7 @@ public class OrdinalMapper {
     private static Ordinal convertToOrdinals(Map<String, AttributeValue> attrMap) {
         return Ordinal.builder()
                         .tokenID(Integer.parseInt(attrMap.get("tokenID").n()))
-                        .index(Integer.parseInt(attrMap.get("index").n()))
+                        .sequenceNo(Integer.parseInt(attrMap.get("sequenceNo").n()))
                         .createTime(attrMap.get("createTime").s())
                         .genesisTxID(attrMap.get("genesisTxID").s())
                         .inscriptionID(Integer.parseInt(attrMap.get("inscriptionID").n()))

@@ -1,2 +1,6 @@
 server:
   port: 8000
+
+aws:
+  accessKeyId: AKIAZ2YWUJ7ZHYP2EJGQ
+  secretAccessKey: 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
