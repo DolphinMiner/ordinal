@@ -10,7 +10,6 @@ import (
 	"log"
 	"ordinal/serverless/entity"
 	"strconv"
-	"time"
 )
 
 const OrdinalTableName = "ordinal"
@@ -72,7 +71,7 @@ func PutOrdinal(ordinalRequest *entity.Ordinal) error {
 		SequenceNo:    ordinalsSize,
 		GenesisTxID:   ordinalRequest.GenesisTxID,
 		InscriptionID: ordinalRequest.InscriptionID,
-		CreateTime:    time.Now().Format("2006-01-02 15:04:05"),
+		CreateTime:    ordinalRequest.CreateTime,
 	}
 	item, err := attributevalue.MarshalMap(ordinal)
 	if err != nil {

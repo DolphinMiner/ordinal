@@ -2,6 +2,7 @@ package processor
 
 import (
 	"encoding/json"
+	ddb "ordinal/serverless/db"
 	"ordinal/serverless/entity"
 	"ordinal/serverless/httputil"
 	"strings"
@@ -56,7 +57,11 @@ func GetTxIdInfo(txIds []string) bool {
 						// 判断图片16进制数据是否是项目集合中的16进制数据
 						if imageId, exits := judgeImage(imageContent); exits {
 							// 将txId信息存入DDB
-							saveInfo(imageContent, imageId, txInfo.Hash)
+							saveSuccess, err := saveInfo(imageId, txInfo)
+							if err != nil {
+								return false
+							}
+							return saveSuccess
 						}
 					}
 				}
@@ -69,12 +74,26 @@ func GetTxIdInfo(txIds []string) bool {
 }
 
 func judgeImage(imageContent string) (int, bool) {
-	// 将所有图片信息转换为一个map,<imageHex,imageId>
+	// 将所有图片信息转换为一个map,<imageHex,imageId> 初始化图片信息
 	images := make(map[string]int, 10000)
 	value, exists := images[imageContent]
 	return value, exists
 }
 
-func saveInfo(imageContent string, imageId int, txHash string) {
+func saveInfo(imageId int, txInfo entity.TxInfo) (bool, error) {
 	// 将数据存入DDB
+	ordinal := entity.Ordinal{
+		TokenID:     imageId,
+		SequenceNo:  0,
+		GenesisTxID: txInfo.Hash,
+		// todo 爬虫爬inscription id
+		InscriptionID: 0,
+		CreateTime:    txInfo.Confirmed.Format("2006-01-02 15:04:05"),
+	}
+
+	err := ddb.PutOrdinal(&ordinal)
+	if err != nil {
+		return false, err
+	}
+	return true, err
 }

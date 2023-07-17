@@ -17,7 +17,7 @@ func main() {
 var pngFS embed.FS
 
 func Handler() {
-	for pngIndex := 0; pngIndex < 1000; pngIndex++ {
+	for pngIndex := 0; pngIndex < 10000; pngIndex++ {
 		fileName := getPngName(pngIndex)
 		fmt.Printf("current filename is %s", fileName)
 		bytes, err := pngFS.ReadFile(fileName)
