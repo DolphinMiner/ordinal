@@ -3,15 +3,17 @@
 ## 环境配置
 
 ### 1.Windows
-在环境变量中添加`AWS_ACCESS_KEY_ID`和`AWS_SECRET_ACCESS_KEY`，或者使用命令方式添加：
+在`C:\Users\Your-Username\.aws\credentials`文件中配置 AWS 访问凭证：
 ```
-setx AWS_ACCESS_KEY_ID "your_access_key_id"
-setx AWS_SECRET_ACCESS_KEY "your_secret_access_key"
+[default]
+aws_access_key_id = <ACCESS_KEY_ID>
+aws_secret_access_key = <SECRET_ACCESS_KEY>
 ```
 
 ### 2.Linux & Mac 
-在 `~/.bashrc` 或 `~/.bash_profile` 文件中添加：
+在 ~/.aws/credentials 文件中配置 AWS 访问凭证：
 ```
-export AWS_ACCESS_KEY_ID=your_access_key_id
-export AWS_SECRET_ACCESS_KEY=your_secret_access_key
+[default]
+aws_access_key_id = <ACCESS_KEY_ID>
+aws_secret_access_key = <SECRET_ACCESS_KEY>
 ```
